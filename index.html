@@ -71,7 +71,7 @@
   </div>
 
   <div id="employee-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" onclick="closeEmployeeModal(event)">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 relative animate-in fade-in zoom-in duration-150" onclick="event.stopPropagation()">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 relative animate-in fade-in zoom-in duration-150" onclick="event.stopPropagation()">
       <button onclick="closeEmployeeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
       
       <div class="flex items-center gap-3 mb-4">
@@ -79,51 +79,51 @@
           👤
         </div>
         <div>
-          <h3 id="modal-name" class="text-base font-bold text-slate-800 leading-tight">-</h3>
-          <p id="modal-title" class="text-xs text-blue-600 font-semibold mt-0.5">-</p>
+          <h3 id="modal-name" class="text-lg font-bold text-slate-800 leading-tight">-</h3>
+          <p id="modal-title" class="text-sm text-blue-600 font-semibold mt-0.5">-</p>
         </div>
       </div>
 
-      <div class="space-y-2.5 border-t border-slate-100 pt-4 text-xs">
-        <div class="flex justify-between py-1 border-b border-slate-50">
-          <span class="text-slate-500">NIP / ID Karyawan</span>
-          <span id="modal-id" class="font-mono font-bold text-slate-700">-</span>
+      <div class="space-y-3 border-t border-slate-100 pt-4 text-sm">
+        <div class="flex justify-between items-center py-1 border-b border-slate-50 gap-4">
+          <span class="text-slate-500 shrink-0">NIP / ID Karyawan</span>
+          <span id="modal-id" class="font-mono font-bold text-slate-700 text-right">-</span>
         </div>
-        <div class="flex justify-between py-1 border-b border-slate-50">
-          <span class="text-slate-500">Status Karyawan</span>
-          <span id="modal-status-karyawan" class="font-semibold text-slate-700">-</span>
+        <div class="flex justify-between items-center py-1 border-b border-slate-50 gap-4">
+          <span class="text-slate-500 shrink-0">Status Karyawan</span>
+          <span id="modal-status-karyawan" class="font-semibold text-slate-700 text-right">-</span>
         </div>
-        <div class="flex justify-between py-1 border-b border-slate-50">
-          <span class="text-slate-500">Lokasi Kerja</span>
-          <span id="modal-lokasi" class="font-semibold text-slate-700">-</span>
+        <div class="flex justify-between items-center py-1 border-b border-slate-50 gap-4">
+          <span class="text-slate-500 shrink-0">Lokasi Kerja</span>
+          <span id="modal-lokasi" class="font-semibold text-slate-700 text-right">-</span>
         </div>
-        <div class="flex justify-between py-1 border-b border-slate-50">
-          <span class="text-slate-500">Email</span>
-          <span id="modal-email" class="font-medium text-blue-600 font-mono">-</span>
+        <div class="flex justify-between items-center py-1 border-b border-slate-50 gap-4">
+          <span class="text-slate-500 shrink-0">Email</span>
+          <span id="modal-email" class="font-medium text-blue-600 font-mono text-right break-all">-</span>
         </div>
-        <div class="flex justify-between py-1 border-b border-slate-50">
-          <span class="text-slate-500">Pendidikan Terakhir</span>
+        <div class="flex justify-between items-center py-1 border-b border-slate-50 gap-4">
+          <span class="text-slate-500 shrink-0">Pendidikan Terakhir</span>
           <span id="modal-pendidikan" class="font-semibold text-slate-700 text-right">-</span>
         </div>
-        <div class="flex justify-between py-1 border-b border-slate-50">
-          <span class="text-slate-500">Jurusan</span>
-          <span id="modal-jurusan" class="font-semibold text-slate-700 text-right">-</span>
+        <div class="flex justify-between items-start py-1 border-b border-slate-50 gap-4">
+          <span class="text-slate-500 shrink-0">Jurusan</span>
+          <span id="modal-jurusan" class="font-semibold text-slate-700 text-right leading-snug">-</span>
         </div>
-        <div class="flex justify-between py-1 border-b border-slate-50">
-          <span class="text-slate-500">Almamater / Perguruan Tinggi</span>
-          <span id="modal-alamater" class="font-semibold text-slate-700 text-right max-w-[200px] truncate" title="">-</span>
+        <div class="flex justify-between items-start py-1 border-b border-slate-50 gap-4">
+          <span class="text-slate-500 shrink-0">Almamater / Perguruan Tinggi</span>
+          <span id="modal-alamater" class="font-semibold text-slate-700 text-right leading-snug" title="">-</span>
         </div>
-        <div class="flex justify-between py-1 border-b border-slate-50">
-          <span class="text-slate-500">Usia</span>
-          <span id="modal-age" class="font-semibold text-slate-700">-</span>
+        <div class="flex justify-between items-center py-1 border-b border-slate-50 gap-4">
+          <span class="text-slate-500 shrink-0">Usia</span>
+          <span id="modal-age" class="font-semibold text-slate-700 text-right">-</span>
         </div>
-        <div class="flex justify-between py-1">
-          <span class="text-slate-500">Masa Kerja</span>
-          <span id="modal-tenure" class="font-semibold text-slate-700">-</span>
+        <div class="flex justify-between items-center py-1 gap-4">
+          <span class="text-slate-500 shrink-0">Masa Kerja</span>
+          <span id="modal-tenure" class="font-semibold text-slate-700 text-right">-</span>
         </div>
       </div>
 
-      <button onclick="closeEmployeeModal()" class="w-full mt-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-xl text-xs transition-all">
+      <button onclick="closeEmployeeModal()" class="w-full mt-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-xs transition-all">
         Tutup
       </button>
     </div>
@@ -716,20 +716,20 @@
       document.getElementById('modal-title').innerText = emp.title;
       document.getElementById('modal-id').innerText = emp.id;
       
-      document.getElementById('modal-status-karyawan').innerText = emp.statusKaryawan && emp.statusKaryawan !== '-' ? emp.statusKaryawan : 'Tidak terdata';
-      document.getElementById('modal-email').innerText = emp.email && emp.email !== '-' ? emp.email : 'Tidak terdata';
-      document.getElementById('modal-lokasi').innerText = emp.lokasiKerja && emp.lokasiKerja !== '-' ? emp.lokasiKerja : 'Tidak terdata';
+      document.getElementById('modal-status-karyawan').innerText = emp.statusKaryawan || '-';
+      document.getElementById('modal-email').innerText = emp.email || '-';
+      document.getElementById('modal-lokasi').innerText = emp.lokasiKerja || '-';
       
-      document.getElementById('modal-pendidikan').innerText = emp.pendidikan && emp.pendidikan !== '-' ? emp.pendidikan : 'Tidak terdata';
-      document.getElementById('modal-jurusan').innerText = emp.jurusan && emp.jurusan !== '-' ? emp.jurusan : 'Tidak terdata';
+      document.getElementById('modal-pendidikan').innerText = emp.pendidikan || '-';
+      document.getElementById('modal-jurusan').innerText = emp.jurusan || '-';
       
       const alamaterEl = document.getElementById('modal-alamater');
-      const alamaterVal = emp.alamater && emp.alamater !== '-' ? emp.alamater : 'Tidak terdata';
+      const alamaterVal = emp.alamater || '-';
       alamaterEl.innerText = alamaterVal;
       alamaterEl.title = alamaterVal;
 
-      document.getElementById('modal-age').innerText = emp.ageStr !== '-' ? emp.ageStr : 'Tidak terdata';
-      document.getElementById('modal-tenure').innerText = emp.tenureStr !== '-' ? emp.tenureStr : 'Tidak terdata';
+      document.getElementById('modal-age').innerText = emp.ageStr;
+      document.getElementById('modal-tenure').innerText = emp.tenureStr;
 
       document.getElementById('employee-modal').classList.remove('hidden');
     }
