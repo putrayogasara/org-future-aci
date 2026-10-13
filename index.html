@@ -63,8 +63,8 @@
         </div>
 
         <button 
-          id="btn-login"
           type="submit" 
+          id="btn-login-submit"
           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg text-sm transition-all shadow-md active:scale-[0.98]">
           Masuk Dashboard
         </button>
@@ -186,7 +186,7 @@
             onfocus="handleSearch(this.value)"
           />
           <svg class="w-4 h-4 absolute left-3 top-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 0114 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 0 0114 0z"></path>
           </svg>
         </div>
         <div id="search-results" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto z-50 text-xs"></div>
@@ -330,13 +330,18 @@
       e.preventDefault();
       const inputPass = document.getElementById('password-input').value;
       const errorDiv = document.getElementById('login-error');
+      const submitBtn = document.getElementById('btn-login-submit');
 
       if (inputPass === SECRET_PASSWORD) {
         sessionStorage.setItem('isOrgChartAuthenticated', 'true');
         errorDiv.classList.add('hidden');
+        submitBtn.innerText = "Memuat Data Dashboard...";
+        submitBtn.disabled = true;
+
         document.getElementById('password-modal').classList.add('hidden');
         document.getElementById('app-container').classList.remove('hidden');
         document.getElementById('app-container').classList.add('flex');
+        
         initDashboard();
       } else {
         errorDiv.innerText = "Password salah, silakan coba lagi.";
@@ -393,7 +398,7 @@
 
       fetch('./template_master_karyawan.xlsx')
         .then(res => {
-          if (!res.ok) throw new Error('File Excel "template_master_karyawan.xlsx" tidak ditemukan! Pastikan file berada di folder utama (root).');
+          if (!res.ok) throw new Error('File Excel "template_master_karyawan.xlsx" tidak ditemukan! Pastikan file ada di direktori yang sama.');
           
           const lastModifiedHeader = res.headers.get('Last-Modified');
           if (lastModifiedHeader) {
@@ -418,14 +423,9 @@
           isDataLoaded = true;
         })
         .catch(err => {
-          // Tampilkan error jika file Excel gagal dibaca
-          const errorDiv = document.getElementById('login-error');
-          if (errorDiv) {
-            errorDiv.innerText = err.message;
-            errorDiv.classList.remove('hidden');
-          }
-          document.getElementById('password-modal').classList.remove('hidden');
-          document.getElementById('app-container').classList.add('hidden');
+          alert(err.message);
+          sessionStorage.removeItem('isOrgChartAuthenticated');
+          location.reload();
         });
     }
 
@@ -790,4 +790,233 @@
       const ageGroups = {
         '< 30 Thn': 0,
         '30 - 39 Thn': 0,
-        '40 - 49 Th
+        '40 - 49 Thn': 0,
+        '≥ 50 Thn': 0
+      };
+
+      primaryEmps.forEach(e => {
+        if (e.ageNum !== null) {
+          if (e.ageNum < 30) ageGroups['< 30 Thn']++;
+          else if (e.ageNum <= 39) ageGroups['30 - 39 Thn']++;
+          else if (e.ageNum <= 49) ageGroups['40 - 49 Thn']++;
+          else ageGroups['≥ 50 Thn']++;
+        }
+      });
+
+      renderAgeChartAndTable(ageGroups, totalHeadcount);
+
+      const tenureGroups = {
+        '< 1 Thn': 0,
+        '1 - 3 Thn': 0,
+        '3 - 5 Thn': 0,
+        '> 5 Thn': 0
+      };
+
+      primaryEmps.forEach(e => {
+        if (e.tenureNum !== null) {
+          if (e.tenureNum < 1) tenureGroups['< 1 Thn']++;
+          else if (e.tenureNum <= 3) tenureGroups['1 - 3 Thn']++;
+          else if (e.tenureNum <= 5) tenureGroups['3 - 5 Thn']++;
+          else tenureGroups['> 5 Thn']++;
+        }
+      });
+
+      renderTenureChartAndTable(tenureGroups, totalHeadcount);
+
+      const deptCounts = {};
+      primaryEmps.forEach(e => {
+        const d = e.department || 'Lainnya';
+        deptCounts[d] = (deptCounts[d] || 0) + 1;
+      });
+
+      renderDeptChartAndTable(deptCounts, totalHeadcount);
+    }
+
+    function renderAgeChartAndTable(ageGroups, totalHeadcount) {
+      const labels = Object.keys(ageGroups);
+      const dataValues = Object.values(ageGroups);
+
+      const tableBody = document.getElementById('table-age-body');
+      tableBody.innerHTML = labels.map((lbl, idx) => {
+        const count = dataValues[idx];
+        const pct = ((count / totalHeadcount) * 100).toFixed(1);
+        return `
+          <tr>
+            <td class="py-2 font-semibold text-slate-700">${lbl}</td>
+            <td class="py-2 text-right">${count}</td>
+            <td class="py-2 text-right font-bold text-indigo-600">${pct}%</td>
+          </tr>
+        `;
+      }).join('');
+
+      const ctx = document.getElementById('ageChart').getContext('2d');
+      if (ageChartInstance) ageChartInstance.destroy();
+      ageChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: dataValues,
+            backgroundColor: ['#818cf8', '#6366f1', '#4f46e5', '#3730a3'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    function renderTenureChartAndTable(tenureGroups, totalHeadcount) {
+      const labels = Object.keys(tenureGroups);
+      const dataValues = Object.values(tenureGroups);
+
+      const tableBody = document.getElementById('table-tenure-body');
+      tableBody.innerHTML = labels.map((lbl, idx) => {
+        const count = dataValues[idx];
+        const pct = ((count / totalHeadcount) * 100).toFixed(1);
+        return `
+          <tr>
+            <td class="py-2 font-semibold text-slate-700">${lbl}</td>
+            <td class="py-2 text-right">${count}</td>
+            <td class="py-2 text-right font-bold text-teal-600">${pct}%</td>
+          </tr>
+        `;
+      }).join('');
+
+      const ctx = document.getElementById('tenureChart').getContext('2d');
+      if (tenureChartInstance) tenureChartInstance.destroy();
+      tenureChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: dataValues,
+            backgroundColor: ['#2dd4bf', '#14b8a6', '#0d9488', '#115e59'],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    function renderDeptChartAndTable(deptCounts, totalHeadcount) {
+      const sortedDepts = Object.entries(deptCounts).sort((a, b) => b[1] - a[1]);
+      const labels = sortedDepts.map(d => d[0]);
+      const dataValues = sortedDepts.map(d => d[1]);
+
+      const tableBody = document.getElementById('table-dept-body');
+      tableBody.innerHTML = sortedDepts.map(([dept, count]) => {
+        const pct = ((count / totalHeadcount) * 100).toFixed(1);
+        return `
+          <tr class="hover:bg-slate-100/50 transition-colors">
+            <td class="py-2 pr-2 font-semibold text-slate-700 truncate max-w-[140px]" title="${dept}">${dept}</td>
+            <td class="py-2 text-right font-medium">${count}</td>
+            <td class="py-2 text-right font-bold text-blue-600">${pct}%</td>
+          </tr>
+        `;
+      }).join('');
+
+      const ctx = document.getElementById('deptChart').getContext('2d');
+      if (deptChartInstance) deptChartInstance.destroy();
+      deptChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Jumlah Karyawan',
+            data: dataValues,
+            backgroundColor: '#3b82f6',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+          }
+        }
+      });
+    }
+
+    function handleSearch(query) {
+      const resultsContainer = document.getElementById('search-results');
+      if (!query || query.trim() === '') {
+        resultsContainer.classList.add('hidden');
+        resultsContainer.innerHTML = '';
+        return;
+      }
+
+      const q = query.toLowerCase().trim();
+      const filtered = allEmployees.filter(emp => 
+        emp.name.toLowerCase().includes(q) || 
+        emp.id.toLowerCase().includes(q) || 
+        emp.title.toLowerCase().includes(q) ||
+        emp.jurusan.toLowerCase().includes(q) ||
+        emp.alamater.toLowerCase().includes(q)
+      ).slice(0, 10);
+
+      if (filtered.length === 0) {
+        resultsContainer.innerHTML = `<div class="p-3 text-slate-400 italic text-center">Karyawan tidak ditemukan</div>`;
+      } else {
+        resultsContainer.innerHTML = filtered.map(emp => `
+          <div 
+            onclick="focusOnNode('${emp.posCode}')" 
+            class="p-2.5 hover:bg-blue-50 cursor-pointer border-b border-slate-100 last:border-none flex items-center justify-between transition-colors">
+            <div>
+              <div class="font-bold text-slate-800">${emp.name}</div>
+              <div class="text-[10px] text-slate-500">${emp.title}</div>
+            </div>
+            <span class="text-[10px] font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-semibold">${emp.id}</span>
+          </div>
+        `).join('');
+      }
+
+      resultsContainer.classList.remove('hidden');
+    }
+
+    function focusOnNode(posCode) {
+      closeSearchResults();
+      if (!chart) return;
+
+      chart.setExpanded(posCode).render();
+
+      setTimeout(() => {
+        chart.setCentered(posCode).render();
+
+        const nodeEl = document.getElementById(`node-box-${posCode}`);
+        if (nodeEl) {
+          nodeEl.classList.app('node-highlighted');
+          setTimeout(() => {
+            nodeEl.classList.remove('node-highlighted');
+          }, 4000);
+        }
+      }, 300);
+    }
+
+    function closeSearchResults() {
+      const resultsContainer = document.getElementById('search-results');
+      if (resultsContainer) {
+        resultsContainer.classList.add('hidden');
+      }
+    }
+  </script>
+</body>
+</html>
