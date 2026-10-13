@@ -70,6 +70,7 @@
     </div>
   </div>
 
+  <!-- Modal Detail Karyawan -->
   <div id="employee-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" onclick="closeEmployeeModal(event)">
     <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 relative animate-in fade-in zoom-in duration-150" onclick="event.stopPropagation()">
       <button onclick="closeEmployeeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
@@ -96,6 +97,11 @@
         <div class="flex justify-between items-center py-1 border-b border-slate-50 gap-4">
           <span class="text-slate-500 shrink-0">Lokasi Kerja</span>
           <span id="modal-lokasi" class="font-semibold text-slate-700 text-right">-</span>
+        </div>
+        <!-- Tambahan Baris Roster / Shift -->
+        <div class="flex justify-between items-center py-1 border-b border-slate-50 gap-4">
+          <span class="text-slate-500 shrink-0">Roster Kerja</span>
+          <span id="modal-roster" class="font-semibold text-slate-700 text-right">-</span>
         </div>
         <div class="flex justify-between items-center py-1 border-b border-slate-50 gap-4">
           <span class="text-slate-500 shrink-0">Email</span>
@@ -178,7 +184,7 @@
             onfocus="handleSearch(this.value)"
           />
           <svg class="w-4 h-4 absolute left-3 top-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 0 0114 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 0114 0z"></path>
           </svg>
         </div>
         <div id="search-results" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto z-50 text-xs"></div>
@@ -470,6 +476,10 @@
         const statusKaryawan= getExactVal('Status Karyawan') || getExactVal('Status Pekerjaan') || getExactVal('Status Kerja') || getExactVal('Status') || '-';
         const email         = getExactVal('Email') || getExactVal('Email Address') || getExactVal('Alamat Email') || '-';
         const lokasiKerja   = getExactVal('Lokasi Kerja') || getExactVal('Lokasi') || getExactVal('Site') || '-';
+        
+        // Mengambil data Roster dari Excel (Kolom R)
+        const roster        = getExactVal('Roster') || getExactVal('Kategori Shift') || getExactVal('Shift') || '-';
+
         const pendidikan    = getExactVal('Pendidikan Terakhir') || getExactVal('Pendidikan') || getExactVal('Tingkat Pendidikan') || '-';
         const jurusan       = getExactVal('Jurusan') || getExactVal('Program Studi') || getExactVal('Prodi') || '-';
         const alamater      = getExactVal('Alamater') || getExactVal('Almamater') || getExactVal('Perguruan Tinggi') || getExactVal('Universitas') || getExactVal('Kampus') || '-';
@@ -513,6 +523,7 @@
             statusKaryawan: statusKaryawan,
             email: email,
             lokasiKerja: lokasiKerja,
+            roster: roster,
             pendidikan: pendidikan,
             jurusan: jurusan,
             alamater: alamater,
@@ -717,8 +728,9 @@
       document.getElementById('modal-id').innerText = emp.id;
       
       document.getElementById('modal-status-karyawan').innerText = emp.statusKaryawan || '-';
-      document.getElementById('modal-email').innerText = emp.email || '-';
       document.getElementById('modal-lokasi').innerText = emp.lokasiKerja || '-';
+      document.getElementById('modal-roster').innerText = emp.roster || '-';
+      document.getElementById('modal-email').innerText = emp.email || '-';
       
       document.getElementById('modal-pendidikan').innerText = emp.pendidikan || '-';
       document.getElementById('modal-jurusan').innerText = emp.jurusan || '-';
