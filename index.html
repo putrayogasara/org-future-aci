@@ -220,7 +220,7 @@
             <p class="text-xs text-slate-500 mt-1">Ringkasan sebaran statistik Usia, Masa Kerja, dan Headcount per Departemen.</p>
           </div>
 
-          <!-- Filter Kontrol -->
+          <!-- Filter Menu -->
           <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
             <div class="flex flex-col gap-1">
               <label class="text-[10px] font-bold text-slate-500 uppercase">Departemen</label>
@@ -245,7 +245,7 @@
 
             <div class="flex items-end">
               <button onclick="resetDemographicsFilter()" class="px-3 py-1.5 text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg transition-all h-[30px]">
-                Reset Filter
+                Reset
               </button>
             </div>
           </div>
@@ -409,4 +409,214 @@
         btnDemo.className = "px-4 py-2 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-2";
       } else {
         viewChart.classList.add('hidden');
-        chartToolbar.
+        chartToolbar.classList.add('hidden');
+        chartToolbar.classList.remove('flex');
+        viewDemo.classList.remove('hidden');
+
+        btnDemo.className = "px-4 py-2 text-xs font-bold rounded-lg transition-all bg-white text-blue-600 shadow-sm flex items-center gap-2";
+        btnChart.className = "px-4 py-2 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-2";
+      }
+    }
+
+    let chart;
+    let allEmployees = [];
+    let isDataLoaded = false;
+    
+    let ageChartInstance = null;
+    let tenureChartInstance = null;
+    let deptChartInstance = null;
+
+    function initDashboard() {
+      if (isDataLoaded) return;
+
+      fetch('./template_master_karyawan.xlsx')
+        .then(res => {
+          if (!res.ok) throw new Error('File Excel "template_master_karyawan.xlsx" tidak ditemukan!');
+          
+          const lastModifiedHeader = res.headers.get('Last-Modified');
+          if (lastModifiedHeader) {
+            const date = new Date(lastModifiedHeader);
+            const formattedDate = date.toLocaleDateString('id-ID', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            document.getElementById('last-updated').innerText = `Last updated: ${formattedDate} WIB`;
+          }
+
+          return res.arrayBuffer();
+        })
+        .then(buffer => {
+          const workbook = XLSX.read(buffer, { type: 'array' });
+          const sheetName = workbook.SheetNames.includes("Master_Karyawan") ? "Master_Karyawan" : workbook.SheetNames[0];
+          const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+          processDataAndRender(rawData);
+          isDataLoaded = true;
+        })
+        .catch(err => {
+          alert(err.message);
+          sessionStorage.removeItem('isOrgChartAuthenticated');
+          location.reload();
+        });
+    }
+
+    function getRoleStyle(title) {
+      const t = (title || '').toLowerCase();
+      if (t.includes('komisaris') || t.includes('boc')) {
+        return { headerBg: 'bg-purple-700 text-white', cardBorder: 'border-purple-300', titleColor: 'text-purple-700 font-bold', levelRank: 1 };
+      }
+      if (t.includes('ceo') || t.includes('coo') || t.includes('bod') || t.includes('direktur')) {
+        return { headerBg: 'bg-indigo-700 text-white', cardBorder: 'border-indigo-300', titleColor: 'text-indigo-700 font-bold', levelRank: 2 };
+      }
+      if (t.includes('avp') || t.includes('vp') || t.includes('vice president')) {
+        return { headerBg: 'bg-blue-600 text-white', cardBorder: 'border-blue-300', titleColor: 'text-blue-600 font-bold', levelRank: 3 };
+      }
+      if (t.includes('manager') || t.includes('mgr') || t.includes('asst manager')) {
+        return { headerBg: 'bg-sky-500 text-white', cardBorder: 'border-sky-300', titleColor: 'text-sky-600 font-bold', levelRank: 4 };
+      }
+      if (t.includes('head') || t.includes('sr. officer') || t.includes('sr officer') || t.includes('specialist')) {
+        return { headerBg: 'bg-teal-600 text-white', cardBorder: 'border-teal-300', titleColor: 'text-teal-700 font-bold', levelRank: 5 };
+      }
+      if (t.includes('supervisor') || t.includes('spv') || t.includes('officer')) {
+        return { headerBg: 'bg-cyan-600 text-white', cardBorder: 'border-cyan-300', titleColor: 'text-cyan-700 font-semibold', levelRank: 6 };
+      }
+      if (t.includes('leader') || t.includes('gl') || t.includes('group leader')) {
+        return { headerBg: 'bg-amber-500 text-white', cardBorder: 'border-amber-300', titleColor: 'text-amber-600 font-semibold', levelRank: 7 };
+      }
+      return { headerBg: 'bg-slate-600 text-white', cardBorder: 'border-slate-300', titleColor: 'text-slate-600', levelRank: 8 };
+    }
+
+    function processDataAndRender(rawData) {
+      const boxMap = {};
+      let totalPrimaryCount = 0;
+      let totalConcurrentCount = 0;
+      allEmployees = [];
+
+      rawData.forEach(item => {
+        const getExactVal = (exactKeyName) => {
+          const keys = Object.keys(item);
+          const foundKey = keys.find(k => k.trim().toLowerCase() === exactKeyName.toLowerCase());
+          if (foundKey && item[foundKey] !== undefined && item[foundKey] !== null) {
+            return String(item[foundKey]).trim();
+          }
+          return '';
+        };
+
+        const empId         = getExactVal('ID Karyawan') || getExactVal('Kode Karyawan') || getExactVal('NIP');
+        const empName       = getExactVal('Nama Karyawan') || getExactVal('Nama');
+        const title         = getExactVal('Jabatan / Posisi') || getExactVal('Jabatan') || getExactVal('Posisi');
+        const posCode       = getExactVal('Kode Posisi') || getExactVal('Pos Code');
+        const parentCode    = getExactVal('Kode Atasan Direct') || getExactVal('Kode Atasan Direct/Indirect') || getExactVal('Kode Atasan');
+        const dept          = getExactVal('Departemen') || getExactVal('Dept') || 'Lainnya';
+        const subDept       = getExactVal('Sub-Departemen') || getExactVal('Sub Dept');
+        const section       = getExactVal('Section') || getExactVal('Seksi');
+        const unit          = getExactVal('Unit');
+        
+        const statusKaryawan= getExactVal('Status Karyawan') || getExactVal('Status Pekerjaan') || getExactVal('Status Kerja') || getExactVal('Status') || '-';
+        const email         = getExactVal('Email') || getExactVal('Email Address') || getExactVal('Alamat Email') || '-';
+        const lokasiKerja   = getExactVal('Lokasi Kerja') || getExactVal('Lokasi') || getExactVal('Site') || '-';
+        
+        const roster        = getExactVal('Roster') || getExactVal('Kategori Shift') || getExactVal('Shift') || '-';
+
+        const pendidikan    = getExactVal('Pendidikan Terakhir') || getExactVal('Pendidikan') || getExactVal('Tingkat Pendidikan') || '-';
+        const jurusan       = getExactVal('Jurusan') || getExactVal('Program Studi') || getExactVal('Prodi') || '-';
+        const alamater      = getExactVal('Alamater') || getExactVal('Almamater') || getExactVal('Perguruan Tinggi') || getExactVal('Universitas') || getExactVal('Kampus') || '-';
+
+        const ageVal        = getExactVal('Usia') || getExactVal('Umur');
+        const parsedAge     = (ageVal && ageVal.toLowerCase() !== 'unknown' && !isNaN(ageVal)) ? Math.round(Number(ageVal)) : null;
+        
+        const tenureVal     = getExactVal('Masa Kerja') || getExactVal('Tenure') || getExactVal('Masa Kerja (Tahun)');
+        const parsedTenure  = (tenureVal && !isNaN(parseFloat(tenureVal))) ? parseFloat(tenureVal) : null;
+
+        const isAssistantVal = (getExactVal('Is Assistant') || getExactVal('Status Posisi') || getExactVal('Assistant')).toLowerCase();
+        const isAssistant    = isAssistantVal === 'true' || isAssistantVal === 'ya' || isAssistantVal === '1' || isAssistantVal === 'yes';
+
+        const membership    = getExactVal('Status Keanggotaan') || getExactVal('Status Rangkap') || 'Primary';
+        const isConcurrent  = membership.toLowerCase().includes('concurrent') || 
+                              membership.toLowerCase().includes('rangkap') || 
+                              membership.toLowerCase().includes('secondary');
+
+        if (!posCode) return;
+
+        if (!boxMap[posCode]) {
+          boxMap[posCode] = {
+            id: posCode,
+            parentId: parentCode || '',
+            department: dept,
+            subDepartment: subDept,
+            section: section,
+            unit: unit,
+            _isAssistant: isAssistant,
+            minLevelRank: 8,
+            members: []
+          };
+        }
+
+        if (empName && empName.toLowerCase() !== 'undefined' && empName !== '') {
+          const memberObj = {
+            id: empId || '-',
+            name: empName,
+            title: title || '-',
+            department: dept,
+            statusKaryawan: statusKaryawan,
+            email: email,
+            lokasiKerja: lokasiKerja,
+            roster: roster,
+            pendidikan: pendidikan,
+            jurusan: jurusan,
+            alamater: alamater,
+            ageNum: parsedAge,
+            ageStr: parsedAge ? `${parsedAge} thn` : '-',
+            tenureNum: parsedTenure,
+            tenureStr: tenureVal || '-',
+            isConcurrent: isConcurrent,
+            posCode: posCode
+          };
+
+          boxMap[posCode].members.push(memberObj);
+          allEmployees.push(memberObj);
+
+          if (isConcurrent) {
+            totalConcurrentCount++;
+          } else {
+            totalPrimaryCount++;
+          }
+        }
+      });
+
+      Object.values(boxMap).forEach(box => {
+        box.members.sort((a, b) => getRoleStyle(a.title).levelRank - getRoleStyle(b.title).levelRank);
+        box.minLevelRank = box.members.length > 0 ? getRoleStyle(box.members[0].title).levelRank : 8;
+      });
+
+      const formattedData = Object.values(boxMap);
+
+      document.getElementById('total-manpower').innerText = `Total Headcount: ${totalPrimaryCount} Employee`;
+      document.getElementById('total-concurrent').innerText = `Concurrent: ${totalConcurrentCount} Position(s)`;
+
+      populateDemographicsFilters();
+      renderDemographicsAnalytics();
+
+      chart = new d3.OrgChart()
+        .container('.chart-container')
+        .data(formattedData)
+        .nodeId(d => d.id)
+        .parentNodeId(d => d.parentId)
+        .compact(false)
+        .layout('top')
+        .siblingsMargin(d => 40)
+        .childrenMargin(d => 70)
+        .linkUpdate(function(d, i, arr) {
+          d3.select(this)
+            .attr('stroke', '#475569')
+            .attr('stroke-width', 2.5);
+        })
+        .nodeWidth(node => {
+          const count = node.data.members ? node.data.members.length : 1;
+          return count > 5 ? 600 : 320;
+        })
+        .nodeHeight(node => {
+          const count = node.data.members ? node.data.members.length : 1;
+          if (
