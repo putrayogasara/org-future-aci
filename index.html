@@ -63,6 +63,7 @@
         </div>
 
         <button 
+          id="btn-login"
           type="submit" 
           class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg text-sm transition-all shadow-md active:scale-[0.98]">
           Masuk Dashboard
@@ -185,7 +186,7 @@
             onfocus="handleSearch(this.value)"
           />
           <svg class="w-4 h-4 absolute left-3 top-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 0 0114 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 0114 0z"></path>
           </svg>
         </div>
         <div id="search-results" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto z-50 text-xs"></div>
@@ -338,6 +339,7 @@
         document.getElementById('app-container').classList.add('flex');
         initDashboard();
       } else {
+        errorDiv.innerText = "Password salah, silakan coba lagi.";
         errorDiv.classList.remove('hidden');
         document.getElementById('password-input').value = '';
         document.getElementById('password-input').focus();
@@ -391,7 +393,7 @@
 
       fetch('./template_master_karyawan.xlsx')
         .then(res => {
-          if (!res.ok) throw new Error('File "template_master_karyawan.xlsx" tidak ditemukan!');
+          if (!res.ok) throw new Error('File Excel "template_master_karyawan.xlsx" tidak ditemukan! Pastikan file berada di folder utama (root).');
           
           const lastModifiedHeader = res.headers.get('Last-Modified');
           if (lastModifiedHeader) {
@@ -416,9 +418,14 @@
           isDataLoaded = true;
         })
         .catch(err => {
-          const errDiv = document.getElementById('error-message');
-          errDiv.classList.remove('hidden');
-          errDiv.innerText = err.message;
+          // Tampilkan error jika file Excel gagal dibaca
+          const errorDiv = document.getElementById('login-error');
+          if (errorDiv) {
+            errorDiv.innerText = err.message;
+            errorDiv.classList.remove('hidden');
+          }
+          document.getElementById('password-modal').classList.remove('hidden');
+          document.getElementById('app-container').classList.add('hidden');
         });
     }
 
@@ -783,9 +790,4 @@
       const ageGroups = {
         '< 30 Thn': 0,
         '30 - 39 Thn': 0,
-        '40 - 49 Thn': 0,
-        '≥ 50 Thn': 0
-      };
-
-      primaryEmps.forEach(e => {
-        if (e.ageNum !== null
+        '40 - 49 Th
