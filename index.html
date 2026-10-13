@@ -39,6 +39,7 @@
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col font-sans">
 
+  <!-- Modal Password Login -->
   <div id="password-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200">
       <div class="text-center mb-6">
@@ -98,7 +99,6 @@
           <span class="text-slate-500 shrink-0">Lokasi Kerja</span>
           <span id="modal-lokasi" class="font-semibold text-slate-700 text-right">-</span>
         </div>
-        <!-- Roster Kerja dengan Ikon Dinamis -->
         <div class="flex justify-between items-center py-1 border-b border-slate-50 gap-4">
           <span class="text-slate-500 shrink-0">Roster Kerja</span>
           <span id="modal-roster" class="font-semibold text-slate-700 text-right flex items-center justify-end gap-1.5">-</span>
@@ -135,6 +135,7 @@
     </div>
   </div>
 
+  <!-- App Container Utama -->
   <div id="app-container" class="hidden flex-col min-h-screen w-full">
 
     <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 shadow-sm z-10 relative">
@@ -729,14 +730,13 @@
       document.getElementById('modal-status-karyawan').innerText = emp.statusKaryawan || '-';
       document.getElementById('modal-lokasi').innerText = emp.lokasiKerja || '-';
       
-      // Deteksi otomatis ikon Roster (Gedung Kantor vs Panah Berputar)
       const rosterVal = emp.roster || '-';
       let rosterIcon = '📋';
       const rLower = rosterVal.toLowerCase();
       if (rLower.includes('non') || rLower.includes('normal') || rLower.includes('reguler')) {
-        rosterIcon = '🏢'; // Kantor untuk Non-Shift
+        rosterIcon = '🏢';
       } else if (rLower.includes('shift') || rLower.includes('roster') || rLower.includes('rotating')) {
-        rosterIcon = '🔄'; // Panah berputar untuk Shift
+        rosterIcon = '🔄';
       }
       
       document.getElementById('modal-roster').innerHTML = `<span>${rosterIcon}</span> <span>${rosterVal}</span>`;
@@ -753,4 +753,39 @@
       document.getElementById('modal-age').innerText = emp.ageStr;
       document.getElementById('modal-tenure').innerText = emp.tenureStr;
 
-      document.getElementById('employee-
+      document.getElementById('employee-modal').classList.remove('hidden');
+    }
+
+    function closeEmployeeModal(e) {
+      if (!e || e.target.id === 'employee-modal' || e.type === 'click') {
+        document.getElementById('employee-modal').classList.add('hidden');
+      }
+    }
+
+    function renderDemographicsAnalytics() {
+      const primaryEmps = allEmployees.filter(e => !e.isConcurrent);
+      const totalHeadcount = primaryEmps.length;
+
+      if (totalHeadcount === 0) return;
+
+      const ageValid = primaryEmps.filter(e => e.ageNum !== null && !isNaN(e.ageNum));
+      const avgAge = ageValid.length > 0 
+        ? (ageValid.reduce((sum, e) => sum + e.ageNum, 0) / ageValid.length).toFixed(1) 
+        : '-';
+      document.getElementById('avg-age-val').innerText = avgAge !== '-' ? `${avgAge} Thn` : '-';
+
+      const tenureValid = primaryEmps.filter(e => e.tenureNum !== null && !isNaN(e.tenureNum));
+      const avgTenure = tenureValid.length > 0 
+        ? (tenureValid.reduce((sum, e) => sum + e.tenureNum, 0) / tenureValid.length).toFixed(1) 
+        : '-';
+      document.getElementById('avg-tenure-val').innerText = avgTenure !== '-' ? `${avgTenure} Thn` : '-';
+
+      const ageGroups = {
+        '< 30 Thn': 0,
+        '30 - 39 Thn': 0,
+        '40 - 49 Thn': 0,
+        '≥ 50 Thn': 0
+      };
+
+      primaryEmps.forEach(e => {
+        if (e.ageNum !== null
