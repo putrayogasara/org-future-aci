@@ -542,10 +542,12 @@
         const title         = getExactVal('Jabatan / Posisi') || getExactVal('Jabatan') || getExactVal('Posisi');
         const posCode       = getExactVal('Kode Posisi') || getExactVal('Pos Code');
         const parentCode    = getExactVal('Kode Atasan Direct') || getExactVal('Kode Atasan Direct/Indirect') || getExactVal('Kode Atasan');
-        const dept          = getExactVal('Departemen') || getExactVal('Dept') || 'Lainnya';
-        const subDept       = getExactVal('Sub-Departemen') || getExactVal('Sub Dept') || 'Lainnya';
-        const section       = getExactVal('Section') || getExactVal('Seksi');
-        const unit          = getExactVal('Unit');
+        
+        // Perbaikan pembacaan Departemen & Unit agar tidak default ke 'Lainnya'
+        const dept          = getExactVal('Departemen') || getExactVal('Dept') || getExactVal('Department') || 'Corporate';
+        const subDept       = getExactVal('Sub-Departemen') || getExactVal('Sub Dept') || getExactVal('Sub Department') || '-';
+        const section       = getExactVal('Section') || getExactVal('Seksi') || '-';
+        const unit          = getExactVal('Unit') || getExactVal('Bagian') || '-';
         
         const statusKaryawan= getExactVal('Status Karyawan') || getExactVal('Status Pekerjaan') || getExactVal('Status Kerja') || getExactVal('Status') || '-';
         const email         = getExactVal('Email') || getExactVal('Email Address') || getExactVal('Alamat Email') || '-';
@@ -585,6 +587,11 @@
             minLevelRank: 8,
             members: []
           };
+        } else {
+          // Jika kotak sudah ada, perbarui unit/section/subdepartment jika belum terisi
+          if ((!boxMap[posCode].unit || boxMap[posCode].unit === '-') && unit && unit !== '-') boxMap[posCode].unit = unit;
+          if ((!boxMap[posCode].section || boxMap[posCode].section === '-') && section && section !== '-') boxMap[posCode].section = section;
+          if ((!boxMap[posCode].subDepartment || boxMap[posCode].subDepartment === '-') && subDept && subDept !== '-') boxMap[posCode].subDepartment = subDept;
         }
 
         if (empName && empName.toLowerCase() !== 'undefined' && empName !== '') {
@@ -684,7 +691,13 @@
             totalSubtreeHeadcount = localPrimaryHeadcount;
           }
 
-          const headerLabel = box.unit || box.section || box.subDepartment || box.department || 'Executive';
+          // Perbaikan prioritas label header agar tidak memunculkan kata 'Lainnya' jika unit/section tersedia
+          const validUnit = (box.unit && box.unit !== '-') ? box.unit : '';
+          const validSection = (box.section && box.section !== '-') ? box.section : '';
+          const validSubDept = (box.subDepartment && box.subDepartment !== '-') ? box.subDepartment : '';
+          const validDept = (box.department && box.department !== 'Lainnya') ? box.department : '';
+
+          const headerLabel = validUnit || validSection || validSubDept || validDept || box.members[0]?.title || 'Struktur Organisasi';
           let topStyle = box.members.length > 0 ? getRoleStyle(box.members[0].title) : getRoleStyle('Operator');
 
           const isGrid = box.members.length > 5;
@@ -854,7 +867,6 @@
       updateSubDepartmentOptions();
     }
 
-    // Fungsi Auto-Filtering Sub-Departemen berdasarkan Departemen yang dipilih
     function onDepartmentChange() {
       updateSubDepartmentOptions();
       applyDemographicsFilter();
@@ -867,7 +879,6 @@
 
       const selectedDept = deptSelect.value;
       
-      // Filter karyawan primer yang sesuai departemen (jika "ALL", ambil semua)
       let candidateEmps = allEmployees.filter(e => !e.isConcurrent);
       if (selectedDept !== 'ALL') {
         candidateEmps = candidateEmps.filter(e => e.department === selectedDept);
@@ -1108,98 +1119,4 @@
       }
 
       const chartCanvas = document.getElementById('deptChart');
-      if (!chartCanvas) return;
-      const ctx = chartCanvas.getContext('2d');
-      if (deptChartInstance) deptChartInstance.destroy();
-      deptChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Jumlah Karyawan',
-            data: dataValues,
-            backgroundColor: '#3b82f6',
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-            x: { grid: { display: false }, ticks: { font: { size: 10 } } }
-          }
-        }
-      });
-    }
-
-    function handleSearch(query) {
-      const resultsContainer = document.getElementById('search-results');
-      if (!query || query.trim() === '') {
-        if (resultsContainer) {
-          resultsContainer.classList.add('hidden');
-          resultsContainer.innerHTML = '';
-        }
-        return;
-      }
-
-      const q = query.toLowerCase().trim();
-      const filtered = allEmployees.filter(emp => 
-        emp.name.toLowerCase().includes(q) || 
-        emp.id.toLowerCase().includes(q) || 
-        emp.title.toLowerCase().includes(q) ||
-        emp.jurusan.toLowerCase().includes(q) ||
-        emp.alamater.toLowerCase().includes(q)
-      ).slice(0, 10);
-
-      if (resultsContainer) {
-        if (filtered.length === 0) {
-          resultsContainer.innerHTML = `<div class="p-3 text-slate-400 italic text-center">Karyawan tidak ditemukan</div>`;
-        } else {
-          resultsContainer.innerHTML = filtered.map(emp => `
-            <div 
-              onclick="focusOnNode('${emp.posCode}')" 
-              class="p-2.5 hover:bg-blue-50 cursor-pointer border-b border-slate-100 last:border-none flex items-center justify-between transition-colors">
-              <div>
-                <div class="font-bold text-slate-800">${emp.name}</div>
-                <div class="text-[10px] text-slate-500">${emp.title}</div>
-              </div>
-              <span class="text-[10px] font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-semibold">${emp.id}</span>
-            </div>
-          `).join('');
-        }
-        resultsContainer.classList.remove('hidden');
-      }
-    }
-
-    function focusOnNode(posCode) {
-      closeSearchResults();
-      if (!chart) return;
-
-      chart.setExpanded(posCode).render();
-
-      setTimeout(() => {
-        chart.setCentered(posCode).render();
-
-        const nodeEl = document.getElementById(`node-box-${posCode}`);
-        if (nodeEl) {
-          nodeEl.classList.add('node-highlighted');
-          setTimeout(() => {
-            nodeEl.classList.remove('node-highlighted');
-          }, 4000);
-        }
-      }, 300);
-    }
-
-    function closeSearchResults() {
-      const resultsContainer = document.getElementById('search-results');
-      if (resultsContainer) {
-        resultsContainer.classList.add('hidden');
-      }
-    }
-  </script>
-</body>
-</html>
+      if (!chart
